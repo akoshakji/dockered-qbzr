@@ -129,6 +129,9 @@ docker_cmd = "docker run --rm -e DISPLAY=unix$DISPLAY -v /tmp/.X11-unix:/tmp/.X1
              + mountpath + ":/workdir -t " + qbzr_docker_image + ":bionic /bin/bash -c \"bzr whoami \\\"" \
              + bzrwhoami + "\\\" && cd " + repositorypath + " && bzr " + qbzr_cmd + relativepath + "\""
 
+# temporarily allow local connection needed by the container to connect the host's X server.
+os.system("xhost +local: >/dev/null 2>&1")
+
 # run the container
 try :
     #print(docker_cmd)
@@ -136,5 +139,8 @@ try :
 except OSError as err :
     print("OS error: {0}".format(err))
     print("Something went wrong. Check your docker installation.")
+finally :
+    # remove local connections permissions
+    os.system("xhost -local: >/dev/null 2>&1")
 
 #print("all done")
