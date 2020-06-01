@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# anwar koshakji
+# (c) 2020 all rights reserved
+#
 
 ## Required: docker installation
 ## The script launches a docker container which runs qbzr on a specified file or folder.
