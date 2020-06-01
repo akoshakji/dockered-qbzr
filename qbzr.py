@@ -46,30 +46,39 @@ parser = argparse.ArgumentParser(description='Run qbzr using docker container\n\
     'Maintainer: Anwar Koshakji https://github.com/akoshakji',  formatter_class=RawTextHelpFormatter)
 parser.add_argument("qbzr_cmd", metavar='qbzr_cmd', nargs=1, \
     choices=['qlog', 'qcommit', 'qshelve', 'qannotate', 'qdiff', 'qadd', 'qconflicts'], help="command of qbzr")
-parser.add_argument("path", metavar='path', nargs=1, \
-    help=" relative path to file or folder which is inside a bzr repository")
+parser.add_argument("qbzr_input", metavar='qbzr_input', nargs='*',\
+    help="path to files or folders that are passed as input to qbzr command")
 args = parser.parse_args()
 
 # inputs
-qbzr_cmd = args.qbzr_cmd[0] # command of qbzr
-path = args.path[0] # path to file or folder
+qbzr_cmd = args.qbzr_cmd[0]   # command of qbzr
+qbzr_input = args.qbzr_input  # input to qbzr command
 
-# get absolute path
-absolutepath = os.path.abspath(path)
+# if no paths were passed as input, take the current directory
+noinputs = False
+if not qbzr_input :
+    noinputs = True
+    qbzr_input = [os.getcwd()]
 
-# check path validity
-if not (os.path.isdir(absolutepath) or os.path.isfile(absolutepath)) :
-    raise NameError("Invalid path.")
+# gather all the input on the same string
+absolutepaths = []
+for path in qbzr_input :
+    # get absolute path
+    absolutepaths.append(os.path.abspath(path))
+    # check path validity
+    if not (os.path.isdir(absolutepaths[-1]) or os.path.isfile(absolutepaths[-1])) :
+        raise NameError("Invalid path.")
 
-# if absolutepath is the path to a file, absolutepath should be cleaned by the file name
-filename = ""
-if os.path.isfile(absolutepath):
-    filename = os.path.basename(absolutepath)
-    absolutepath = os.path.dirname(absolutepath)
+# take the first path in the input list as reference path
+referencepath = absolutepaths[0]
 
-# find the base bzr repository
-if os.path.isdir(absolutepath) :
-    mountpath = absolutepath
+# if referencepath is the path to a file, referencepath should be cleaned by the file name
+if os.path.isfile(referencepath):
+    referencepath = os.path.dirname(referencepath)
+
+# find the base bzr repository and the corresponding mountpath
+if os.path.isdir(referencepath) :
+    mountpath = referencepath
     checkpath = os.path.join(mountpath, ".bzr")
     while not (os.path.exists(checkpath) or (mountpath == "/")) :
         mountpath = os.path.dirname(mountpath)
@@ -83,19 +92,23 @@ if mountpath == "/" :
 repositoryname = os.path.basename(mountpath)
 repositorypath = "."
 
-# get the relative path to be used inside the container
-relativepath = "." + absolutepath.replace(mountpath, "")
+# get the relative path to be used inside the container. If no inputs were
+# specified, qbzr command is applied to the base repository
+relativepath = ""
+if noinputs :
+    relativepath = " ."
+else:
+    for path in absolutepaths :
+        relativepath = relativepath + " " + os.path.relpath(path, mountpath)
 
-# if shared repo, need to mount the upper directory
+# in case of a shared repo, mount in docker the upper directory with the main .bzr, 
+# but act on the most nested repository (the specific iteration)
 checkpath = os.path.dirname(mountpath)
 checkpath = os.path.join(checkpath, ".bzr")
 if os.path.exists(checkpath) :
     repositoryname = os.path.basename(mountpath)
     repositorypath = os.path.join(repositorypath, repositoryname)
     mountpath = os.path.dirname(mountpath)
-    
-# append the filename to the relative path
-relativepath = relativepath + "/" + filename
 
 # catch who I am in bzr, removing new line char
 try :
@@ -114,10 +127,11 @@ except OSError :
 # full docker command
 docker_cmd = "docker run --rm -e DISPLAY=unix$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v " \
              + mountpath + ":/workdir -t " + qbzr_docker_image + ":bionic /bin/bash -c \"bzr whoami \\\"" \
-             + bzrwhoami + "\\\" && cd " + repositorypath + " && bzr " + qbzr_cmd + " " + relativepath + "\""
+             + bzrwhoami + "\\\" && cd " + repositorypath + " && bzr " + qbzr_cmd + relativepath + "\""
 
 # run the container
 try :
+    #print(docker_cmd)
     os.system(docker_cmd)
 except OSError as err :
     print("OS error: {0}".format(err))
