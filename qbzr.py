@@ -49,7 +49,7 @@ if not imageIsFound :
 parser = argparse.ArgumentParser(description='Run qbzr using docker container\n\n' \
     'Maintainer: Anwar Koshakji https://github.com/akoshakji',  formatter_class=RawTextHelpFormatter)
 parser.add_argument("qbzr_cmd", metavar='qbzr_cmd', nargs=1, \
-    choices=['qlog', 'qcommit', 'qshelve', 'qannotate', 'qdiff', 'qadd', 'qconflicts'], help="command of qbzr")
+    help="command of qbzr (e.g. qlog, qshelve, qcommit, ...)")
 parser.add_argument("qbzr_input", metavar='qbzr_input', nargs='*',\
     help="path to files or folders that are passed as input to qbzr command")
 args = parser.parse_args()
