@@ -14,7 +14,7 @@ In order to use this package you will need:
 ## Installation
 To install the package, simply clone the git repository on your machine:
 ```bash
-git clone https://akoshakji/dockered-qbzr
+git clone https://github.com/akoshakji/dockered-qbzr
 ```
 You can create a symbolic link in /usr/bin for improve the ease of use:
 ```bash
