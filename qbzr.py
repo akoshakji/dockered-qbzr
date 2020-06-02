@@ -128,13 +128,26 @@ except OSError :
 #print("Relative path:", relativepath)
 #print("Qbzr command to execute:", qbzr_cmd)
 
-# full docker command
-docker_cmd = "docker run --rm -e DISPLAY=unix$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v " \
-             + mountpath + ":/workdir -t " + qbzr_docker_image + ":bionic /bin/bash -c \"bzr whoami \\\"" \
-             + bzrwhoami + "\\\" && cd " + repositorypath + " && bzr " + qbzr_cmd + relativepath + "\""
+# create a symbolic link to bazaar configuration
+os.system("ln -sf $HOME/.config/breezy/breezy.conf $HOME/.config/breezy/bazaar.conf")
 
-# temporarily allow local connection needed by the container to connect the host's X server.
-os.system("xhost +local: >/dev/null 2>&1")
+# full docker command
+docker_cmd =   "docker run --rm -e DISPLAY=unix$DISPLAY" \
+             + " -v /tmp/.X11-unix:/tmp/.X11-unix" \
+             + " -u $(id -u $USER):$(id -g $USER)" \
+             + " -v /etc/group:/etc/group:ro" \
+             + " -v /etc/passwd:/etc/passwd:ro" \
+             + " -v /etc/shadow:/etc/shadow:ro" \
+             + " -v /etc/sudoers.d:/etc/sudoers.d:ro" \
+             + " -v $HOME/.config/breezy:/temp/.bazaar:rw" \
+             + " -v $HOME/.bzr.log:/temp/.bzr.log:rw" \
+             + " -v " + mountpath + ":/workdir" \
+             + " -t " + qbzr_docker_image + ":bionic" \
+             + " /bin/bash -c \"export HOME=/temp" \
+             + " && bzr whoami \\\"" + bzrwhoami + "\\\"" \
+             + " && cd " + repositorypath \
+             + " && bzr " + qbzr_cmd + relativepath \
+             + "\""
 
 # run the container
 try :
@@ -143,8 +156,5 @@ try :
 except OSError as err :
     print("OS error: {0}".format(err))
     print("Something went wrong. Check your docker installation.")
-finally :
-    # remove local connections permissions
-    os.system("xhost -local: >/dev/null 2>&1")
 
 #print("all done")
