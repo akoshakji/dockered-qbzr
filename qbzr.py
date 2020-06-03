@@ -139,12 +139,11 @@ docker_cmd =   "docker run --rm -e DISPLAY=unix$DISPLAY" \
              + " -v /etc/passwd:/etc/passwd:ro" \
              + " -v /etc/shadow:/etc/shadow:ro" \
              + " -v /etc/sudoers.d:/etc/sudoers.d:ro" \
-             + " -v $HOME/.config/breezy:/temp/.bazaar:rw" \
-             + " -v $HOME/.bzr.log:/temp/.bzr.log:rw" \
+             + " -v $HOME/.config/breezy:$HOME/.bazaar:rw" \
+             + " -v $HOME/.bzr.log:$HOME/.bzr.log:rw" \
              + " -v " + mountpath + ":/workdir" \
              + " -t " + qbzr_docker_image + ":bionic" \
-             + " /bin/bash -c \"export HOME=/temp" \
-             + " && bzr whoami \\\"" + bzrwhoami + "\\\"" \
+             + " /bin/bash -c \"bzr whoami \\\"" + bzrwhoami + "\\\"" \
              + " && cd " + repositorypath \
              + " && bzr " + qbzr_cmd + relativepath \
              + "\""
