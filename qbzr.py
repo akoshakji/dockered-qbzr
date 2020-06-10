@@ -128,9 +128,6 @@ except OSError :
 #print("Relative path:", relativepath)
 #print("Qbzr command to execute:", qbzr_cmd)
 
-# create a symbolic link to bazaar configuration
-os.system("ln -sf $HOME/.config/breezy/breezy.conf $HOME/.config/breezy/bazaar.conf")
-
 # full docker command
 docker_cmd =   "docker run --rm -e DISPLAY=unix$DISPLAY" \
              + " -v /tmp/.X11-unix:/tmp/.X11-unix" \
