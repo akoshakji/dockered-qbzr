@@ -5,22 +5,23 @@
 # (c) 2020 all rights reserved
 #
 
-## Required: docker installation
-## The script launches a docker container which runs qbzr on a specified file or folder.
-## Docker container is then automatically removed.
-##
-## Inputs: 
-## 1) qbzr command (qlog, qcommit, qshelve, qannotate, qdiff, qadd, qconflicts) 
-## 2) path to the file or folder present in the bzr repository
+"""
+Required: docker installation
+The script launches a docker container which runs qbzr on a specified file or folder.
+Docker container is then automatically removed.
+
+Inputs:
+1) qbzr command (qlog, qcommit, qshelve, qannotate, qdiff, qadd, qconflicts)
+2) path to the file or folder present in the bzr repository
+"""
 
 # imports
 import os
-import sys
 import argparse
 from argparse import RawTextHelpFormatter
 
 # check that the docker image is present on the system.
-qbzr_docker_image = "akoshakji/qbzr"
+QBZR_DOCKER_IMAGE = "akoshakji/qbzr"
 try :
     docker_images = os.popen("docker images").read()[:-1]
 except OSError as err :
@@ -31,10 +32,10 @@ except OSError as err :
 # loop over all docker images
 imageIsFound = False
 for line in docker_images.splitlines() :
-    if line.split(' ', 1)[0] == qbzr_docker_image : 
+    if line.split(' ', 1)[0] == QBZR_DOCKER_IMAGE :
         imageIsFound = True
         break
-    
+
 # if qbzr image was not found, pull it from docker hub
 if not imageIsFound :
     try :
@@ -47,7 +48,8 @@ if not imageIsFound :
 
 # parse input
 parser = argparse.ArgumentParser(description='Run qbzr using docker container\n\n' \
-    'Maintainer: Anwar Koshakji https://github.com/akoshakji',  formatter_class=RawTextHelpFormatter)
+                                 'Maintainer: Anwar Koshakji https://github.com/akoshakji',
+                                 formatter_class=RawTextHelpFormatter)
 parser.add_argument("qbzr_cmd", metavar='qbzr_cmd', nargs=1, \
     help="command of qbzr (e.g. qlog, qshelve, qcommit, ...)")
 parser.add_argument("qbzr_input", metavar='qbzr_input', nargs='*',\
@@ -105,7 +107,7 @@ else:
     for path in absolutepaths :
         relativepath = relativepath + " " + os.path.relpath(path, mountpath)
 
-# in case of a shared repo, mount in docker the upper directory with the main .bzr, 
+# in case of a shared repo, mount in docker the upper directory with the main .bzr,
 # but act on the most nested repository (the specific iteration)
 checkpath = os.path.dirname(mountpath)
 checkpath = os.path.join(checkpath, ".bzr")
@@ -139,7 +141,7 @@ docker_cmd =   "docker run --rm -e DISPLAY=unix$DISPLAY" \
              + " -v $HOME/.config/breezy:$HOME/.bazaar:rw" \
              + " -v $HOME/.bzr.log:$HOME/.bzr.log:rw" \
              + " -v " + mountpath + ":/workdir" \
-             + " -t " + qbzr_docker_image + ":bionic" \
+             + " -t " + QBZR_DOCKER_IMAGE + ":bionic" \
              + " /bin/bash -c \"bzr whoami \\\"" + bzrwhoami + "\\\"" \
              + " && cd " + repositorypath \
              + " && bzr " + qbzr_cmd + relativepath \
